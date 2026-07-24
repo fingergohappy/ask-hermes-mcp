@@ -1,0 +1,37 @@
+{
+  "name": "ask-hermes-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A small stdio MCP bridge to a local Hermes Agent Gateway",
+  "type": "module",
+  "bin": {
+    "ask-hermes-mcp": "dist/index.js"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@11.10.0",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm build",
+    "dev": "tsx src/index.ts",
+    "format": "biome format --write src tests package.json tsconfig.json tsconfig.build.json biome.json",
+    "lint": "biome check src tests package.json tsconfig.json tsconfig.build.json biome.json",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "prepack": "pnpm build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "yaml": "^2.9.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.5",
+    "@types/node": "^26.1.1",
+    "tsx": "^4.23.1",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}
