@@ -1,6 +1,6 @@
 {
   "name": "ask-hermes-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A small stdio MCP bridge to a local Hermes Agent Gateway",
   "type": "module",
   "files": [

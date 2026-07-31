@@ -50,7 +50,7 @@ The API Server can run terminal-capable Hermes tools. Keep it bound to
 Register the published package with Codex:
 
 ```bash
-codex mcp add ask-hermes -- npx --yes ask-hermes-mcp@0.1.0
+codex mcp add ask-hermes -- npx --yes ask-hermes-mcp@0.1.1
 ```
 
 For Claude Code:
@@ -60,7 +60,7 @@ claude mcp add \
   --transport stdio \
   --scope user \
   ask-hermes -- \
-  npx --yes ask-hermes-mcp@0.1.0
+  npx --yes ask-hermes-mcp@0.1.1
 ```
 
 Pinning the package version keeps MCP startup reproducible. Upgrade the version
@@ -72,7 +72,7 @@ RPM packages require Node.js 24 or newer. Download the RPM from the matching
 GitHub release, then install and register it:
 
 ```bash
-sudo dnf install ./ask-hermes-mcp-0.1.0-1.noarch.rpm
+sudo dnf install ./ask-hermes-mcp-0.1.1-1.noarch.rpm
 codex mcp add ask-hermes -- /usr/bin/ask-hermes-mcp
 ```
 
@@ -158,7 +158,7 @@ session:
 ```bash
 codex mcp add \
   --env ASK_HERMES_DEFAULT_SESSION_ID=mcp-codex-my-project \
-  ask-hermes -- npx --yes ask-hermes-mcp@0.1.0
+  ask-hermes -- npx --yes ask-hermes-mcp@0.1.1
 ```
 
 Do not run multiple clients concurrently with the same stable session ID.
@@ -196,27 +196,20 @@ pnpm build
 To build an RPM locally:
 
 ```bash
-./scripts/build-rpm.sh 0.1.0
+./scripts/build-rpm.sh 0.1.1
 ```
 
 The RPM is written to `rpm-dist/`.
 
 ## Release
 
-Before publishing npm, validate the source and inspect the package:
+Releases are automated. Pushing a version tag runs the release workflow,
+which validates the source, publishes the package to npm via trusted
+publishing, packages the same self-contained JavaScript bundle as a noarch
+RPM, creates a GitHub release, and uploads the RPM plus its SHA-256
+checksum. The tag must exactly match the version in `package.json`:
 
 ```bash
-pnpm check
-npm pack --dry-run
-npm publish
-```
-
-The tag release workflow validates the source, builds the same self-contained
-JavaScript bundle, packages it as a noarch RPM, creates a GitHub release, and
-uploads the RPM plus its SHA-256 checksum. The tag must exactly match the
-version in `package.json`:
-
-```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.1.1
+git push origin v0.1.1
 ```
