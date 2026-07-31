@@ -1,0 +1,27 @@
+name: ask-hermes-mcp
+arch: all
+platform: linux
+version: "${PACKAGE_VERSION}"
+release: 1
+section: default
+priority: optional
+maintainer: fingergohappy
+description: |-
+  A stdio Model Context Protocol server that lets MCP clients ask a local
+  Hermes Agent through its authenticated API Server.
+vendor: fingergohappy
+homepage: https://github.com/fingergohappy/ask-hermes-mcp
+license: LicenseRef-Not-Provided
+depends:
+  - nodejs >= 24
+contents:
+  - src: ./dist/ask-hermes-mcp.cjs
+    dst: /usr/lib/ask-hermes-mcp/ask-hermes-mcp.cjs
+    file_info:
+      mode: 0755
+  - src: /usr/lib/ask-hermes-mcp/ask-hermes-mcp.cjs
+    dst: /usr/bin/ask-hermes-mcp
+    type: symlink
+rpm:
+  summary: MCP bridge to a local Hermes Agent API Server
+  packager: fingergohappy

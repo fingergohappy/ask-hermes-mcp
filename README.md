@@ -25,7 +25,8 @@ ask_hermes(prompt, session_id?)
 
 - Hermes Agent with its Gateway running
 - Hermes API Server enabled on loopback
-- Node.js 24 or newer and pnpm
+- Node.js 24 or newer
+- pnpm when building from source
 - asdf is optional; this repository includes `.tool-versions` for Node.js
   `26.4.0` and pnpm `11.10.0`
 
@@ -43,6 +44,49 @@ The API Server can run terminal-capable Hermes tools. Keep it bound to
 `127.0.0.1` and protect it with a strong key.
 
 ## Install
+
+### npm
+
+Register the published package with Codex:
+
+```bash
+codex mcp add ask-hermes -- npx --yes ask-hermes-mcp@0.1.0
+```
+
+For Claude Code:
+
+```bash
+claude mcp add \
+  --transport stdio \
+  --scope user \
+  ask-hermes -- \
+  npx --yes ask-hermes-mcp@0.1.0
+```
+
+Pinning the package version keeps MCP startup reproducible. Upgrade the version
+explicitly when a newer release is available.
+
+### RPM release
+
+RPM packages require Node.js 24 or newer. Download the RPM from the matching
+GitHub release, then install and register it:
+
+```bash
+sudo dnf install ./ask-hermes-mcp-0.1.0-1.noarch.rpm
+codex mcp add ask-hermes -- /usr/bin/ask-hermes-mcp
+```
+
+For Claude Code:
+
+```bash
+claude mcp add \
+  --transport stdio \
+  --scope user \
+  ask-hermes -- \
+  /usr/bin/ask-hermes-mcp
+```
+
+### Build from source
 
 After cloning the repository:
 
@@ -63,7 +107,7 @@ Current Hermes versions write the key to `config.yaml`; `.env` remains
 supported for older installations. The key is never returned in MCP output, so
 it does not need to be copied into this repository or the MCP client config.
 
-## Register with Codex
+## Register with Codex from source
 
 Run this from the repository root:
 
@@ -83,7 +127,7 @@ codex mcp list
 Start a new Codex session and use `/mcp` to inspect the connection. Codex
 starts the stdio MCP process automatically; do not run `pnpm start` separately.
 
-## Register with Claude Code
+## Register with Claude Code from source
 
 Run this from the repository root:
 
@@ -114,9 +158,7 @@ session:
 ```bash
 codex mcp add \
   --env ASK_HERMES_DEFAULT_SESSION_ID=mcp-codex-my-project \
-  ask-hermes -- \
-  "$(asdf which node)" \
-  "$(realpath dist/index.js)"
+  ask-hermes -- npx --yes ask-hermes-mcp@0.1.0
 ```
 
 Do not run multiple clients concurrently with the same stable session ID.
@@ -149,4 +191,32 @@ pnpm typecheck
 pnpm lint
 pnpm test
 pnpm build
+```
+
+To build an RPM locally:
+
+```bash
+./scripts/build-rpm.sh 0.1.0
+```
+
+The RPM is written to `rpm-dist/`.
+
+## Release
+
+Before publishing npm, validate the source and inspect the package:
+
+```bash
+pnpm check
+npm pack --dry-run
+npm publish
+```
+
+The tag release workflow validates the source, builds the same self-contained
+JavaScript bundle, packages it as a noarch RPM, creates a GitHub release, and
+uploads the RPM plus its SHA-256 checksum. The tag must exactly match the
+version in `package.json`:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
 ```

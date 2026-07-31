@@ -1,4 +1,5 @@
 allowBuilds:
+  "@goreleaser/nfpm": true
   esbuild: true
 overrides:
   "@modelcontextprotocol/sdk>@hono/node-server": 2.0.11
