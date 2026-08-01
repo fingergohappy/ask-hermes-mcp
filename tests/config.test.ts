@@ -41,6 +41,7 @@ describe("loadSettings", () => {
           ASK_HERMES_GATEWAY_URL: "http://localhost:9999/",
           ASK_HERMES_TIMEOUT_SECONDS: "42",
           ASK_HERMES_DEFAULT_SESSION_ID: "mcp-codex",
+          ASK_HERMES_MODEL: "explicit-model",
         },
         home,
       );
@@ -49,6 +50,7 @@ describe("loadSettings", () => {
         apiKey: "explicit-secret",
         defaultSessionId: "mcp-codex",
         gatewayUrl: "http://localhost:9999",
+        model: "explicit-model",
         timeoutMs: 42_000,
       });
     });
@@ -68,6 +70,36 @@ describe("loadSettings", () => {
       writeFileSync(join(home, ".env"), "API_SERVER_KEY=dotenv-secret\n");
 
       expect(loadSettings({}, home).apiKey).toBe("dotenv-secret");
+    });
+  });
+
+  it("reads the chat model from config.yaml", () => {
+    withHermesHome((home) => {
+      writeFileSync(
+        join(home, "config.yaml"),
+        "API_SERVER_KEY: gateway-secret\nmodel:\n  default: grok-4.5\n  provider: xai-oauth\n",
+      );
+
+      expect(loadSettings({}, home).model).toBe("grok-4.5");
+    });
+  });
+
+  it("leaves the model unset when config.yaml has no model.default", () => {
+    withHermesHome((home) => {
+      writeFileSync(join(home, "config.yaml"), "API_SERVER_KEY: gateway-secret\n");
+
+      expect(loadSettings({}, home).model).toBeUndefined();
+    });
+  });
+
+  it("prefers ASK_HERMES_MODEL over config.yaml", () => {
+    withHermesHome((home) => {
+      writeFileSync(
+        join(home, "config.yaml"),
+        "API_SERVER_KEY: gateway-secret\nmodel:\n  default: grok-4.5\n",
+      );
+
+      expect(loadSettings({ ASK_HERMES_MODEL: "grok-4.5-fast" }, home).model).toBe("grok-4.5-fast");
     });
   });
 

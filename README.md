@@ -172,7 +172,25 @@ Alternatively, pass `session_id` explicitly on an individual tool call.
 | `ASK_HERMES_API_KEY` | auto-discovered | Explicit bearer key override |
 | `ASK_HERMES_TIMEOUT_SECONDS` | `1800` | Maximum time for one Hermes turn |
 | `ASK_HERMES_DEFAULT_SESSION_ID` | unset | Optional stable default session |
+| `ASK_HERMES_MODEL` | `model.default` from `config.yaml` | Model pinned on the created session |
 | `HERMES_HOME` | `~/.hermes` | Hermes configuration directory |
+
+### Why the session model is pinned
+
+Sessions created without an explicit model inherit the *virtual* model name the
+gateway advertises on `/v1/models` — usually `hermes-agent`. That name is a
+routing alias for OpenAI-compatible clients, not a real upstream model, and the
+gateway forwards it verbatim to the configured provider:
+
+```text
+provider=xai-oauth base_url=https://api.x.ai/v1 model=hermes-agent
+HTTP 404: The model hermes-agent does not exist or your team ... does not have access to it
+```
+
+The bridge therefore reads `model.default` from `config.yaml` and pins it when
+creating a session. Override it with `ASK_HERMES_MODEL` when a client should
+talk to a different model than the Hermes CLI default. If neither is set, no
+model is sent and the gateway's own fallback applies.
 
 To inspect Hermes sessions:
 

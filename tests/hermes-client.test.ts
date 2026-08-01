@@ -8,6 +8,7 @@ function makeSettings(overrides: Partial<Settings> = {}): Settings {
     apiKey: "test-secret",
     defaultSessionId: undefined,
     gatewayUrl: "http://127.0.0.1:8642",
+    model: undefined,
     timeoutMs: 30_000,
     ...overrides,
   };
@@ -45,6 +46,57 @@ describe("HermesClient", () => {
       "/api/sessions/api-session-1/chat",
       "/api/sessions/api-session-1/chat",
     ]);
+  });
+
+  it("pins the configured model when creating a session", async () => {
+    let createBody: unknown;
+    const fetchMock: FetchLike = async (input, init) => {
+      const url = new URL(input.toString());
+      if (url.pathname === "/api/sessions") {
+        createBody = JSON.parse(String(init?.body));
+        return Response.json(
+          { object: "hermes.session", session: { id: "api-session-1" } },
+          { status: 201 },
+        );
+      }
+      return Response.json({
+        message: { content: "Hermes answer", role: "assistant" },
+        object: "hermes.session.chat.completion",
+        session_id: "api-session-1",
+      });
+    };
+    const client = new HermesClient(
+      makeSettings({ defaultSessionId: "mcp-codex", model: "grok-4.5" }),
+      fetchMock,
+    );
+
+    await client.ask("hello");
+
+    expect(createBody).toEqual({ id: "mcp-codex", model: "grok-4.5" });
+  });
+
+  it("omits the model when none is configured", async () => {
+    let createBody: unknown;
+    const fetchMock: FetchLike = async (input, init) => {
+      const url = new URL(input.toString());
+      if (url.pathname === "/api/sessions") {
+        createBody = JSON.parse(String(init?.body));
+        return Response.json(
+          { object: "hermes.session", session: { id: "api-session-1" } },
+          { status: 201 },
+        );
+      }
+      return Response.json({
+        message: { content: "Hermes answer", role: "assistant" },
+        object: "hermes.session.chat.completion",
+        session_id: "api-session-1",
+      });
+    };
+    const client = new HermesClient(makeSettings(), fetchMock);
+
+    await client.ask("hello");
+
+    expect(createBody).toEqual({});
   });
 
   it("resumes a stable default session after a create conflict", async () => {

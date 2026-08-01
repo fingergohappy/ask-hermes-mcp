@@ -10,6 +10,7 @@ export const DEFAULT_TIMEOUT_MS = 1_800_000;
 export interface Settings {
   gatewayUrl: string;
   apiKey: string;
+  model: string | undefined;
   timeoutMs: number;
   defaultSessionId: string | undefined;
 }
@@ -54,24 +55,41 @@ function readDotenv(path: string): Record<string, string> {
   return values;
 }
 
-function readYamlApiKey(path: string): string {
+function readYamlDocument(path: string): Record<string, unknown> | undefined {
   let text: string;
   try {
     text = readFileSync(path, "utf8");
   } catch {
-    return "";
+    return undefined;
   }
 
   try {
     const document: unknown = parse(text);
-    if (!isRecord(document)) {
-      return "";
-    }
-    const value = document.API_SERVER_KEY;
-    return typeof value === "string" ? value : "";
+    return isRecord(document) ? document : undefined;
   } catch {
+    return undefined;
+  }
+}
+
+function readYamlApiKey(document: Record<string, unknown> | undefined): string {
+  const value = document?.API_SERVER_KEY;
+  return typeof value === "string" ? value : "";
+}
+
+/**
+ * Hermes stores the chat model as `model.default` in config.yaml.
+ *
+ * Creating a session without a model makes the gateway fall back to the
+ * virtual model name it advertises on /v1/models ("hermes-agent"), which is
+ * then sent verbatim to the upstream provider and rejected with HTTP 404.
+ */
+function readYamlModel(document: Record<string, unknown> | undefined): string {
+  const model = document?.model;
+  if (!isRecord(model)) {
     return "";
   }
+  const value = model.default;
+  return typeof value === "string" ? value : "";
 }
 
 function firstNonempty(...values: Array<string | undefined>): string {
@@ -100,7 +118,8 @@ export function loadSettings(
 ): Settings {
   const configuredHermesHome = firstNonempty(environment.HERMES_HOME);
   const resolvedHermesHome = hermesHome ?? (configuredHermesHome || join(homedir(), ".hermes"));
-  const hermesConfigApiKey = readYamlApiKey(join(resolvedHermesHome, "config.yaml"));
+  const hermesConfig = readYamlDocument(join(resolvedHermesHome, "config.yaml"));
+  const hermesConfigApiKey = readYamlApiKey(hermesConfig);
   const hermesEnvironment = readDotenv(join(resolvedHermesHome, ".env"));
   const gatewayUrl = firstNonempty(environment.ASK_HERMES_GATEWAY_URL, DEFAULT_GATEWAY_URL).replace(
     /\/+$/u,
@@ -115,6 +134,7 @@ export function loadSettings(
       hermesConfigApiKey,
       hermesEnvironment.API_SERVER_KEY,
     ),
+    model: firstNonempty(environment.ASK_HERMES_MODEL, readYamlModel(hermesConfig)) || undefined,
     timeoutMs: parseTimeoutMs(environment.ASK_HERMES_TIMEOUT_SECONDS),
     defaultSessionId: firstNonempty(environment.ASK_HERMES_DEFAULT_SESSION_ID) || undefined,
   };

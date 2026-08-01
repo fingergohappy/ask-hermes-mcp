@@ -75,11 +75,7 @@ export class HermesClient {
     }
 
     const desiredId = this.defaultSessionId;
-    const response = await this.request(
-      "POST",
-      "/api/sessions",
-      desiredId ? { id: desiredId } : {},
-    );
+    const response = await this.request("POST", "/api/sessions", this.newSessionBody(desiredId));
 
     if (response.status === 409 && desiredId) {
       const existing = await this.request("GET", `/api/sessions/${encodeURIComponent(desiredId)}`);
@@ -99,6 +95,22 @@ export class HermesClient {
     this.defaultSessionId = createdId;
     this.defaultSessionReady = true;
     return createdId;
+  }
+
+  /**
+   * Sessions created without a model inherit the gateway's advertised virtual
+   * model name ("hermes-agent"), which upstream providers reject with HTTP 404.
+   * Pin the configured model so the session resolves to a real one.
+   */
+  private newSessionBody(desiredId: string | undefined): Record<string, string> {
+    const body: Record<string, string> = {};
+    if (desiredId) {
+      body.id = desiredId;
+    }
+    if (this.settings.model) {
+      body.model = this.settings.model;
+    }
+    return body;
   }
 
   private async chat(sessionId: string, prompt: string): Promise<HermesReply> {
