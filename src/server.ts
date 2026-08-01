@@ -4,6 +4,7 @@ import * as z from "zod/v4";
 
 import { loadSettings } from "./config.js";
 import { HermesClient, HermesError, type HermesReply } from "./hermes-client.js";
+import { resolveVersion } from "./version.js";
 
 export interface HermesAsker {
   ask(prompt: string, sessionId?: string): Promise<HermesReply>;
@@ -12,7 +13,7 @@ export interface HermesAsker {
 export function buildServer(hermes: HermesAsker = new HermesClient(loadSettings())): McpServer {
   const server = new McpServer({
     name: "ask-hermes-mcp",
-    version: "0.1.0",
+    version: resolveVersion(),
   });
 
   server.registerTool(
